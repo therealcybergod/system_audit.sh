@@ -1,0 +1,66 @@
+#!/bin/bash
+# Comprehensive System Audit Script for macOS/Linux
+# Prints system info to terminal
+
+echo "=========================="
+echo "📅 TIMESTAMP"
+echo "=========================="
+date
+
+echo -e "\n=========================="
+echo "👤 USER & HOST INFO"
+echo "=========================="
+echo "Username: $(whoami)"
+echo "Hostname: $(hostname)"
+
+echo -e "\n=========================="
+echo "💻 OS INFO"
+echo "=========================="
+uname -a
+
+echo -e "\n=========================="
+echo "🌐 PUBLIC IP"
+echo "=========================="
+curl -s https://api.ipify.org && echo
+
+echo -e "\n=========================="
+echo "🔗 MAC ADDRESS"
+echo "=========================="
+ifconfig | awk '/ether/ {print $2}'
+
+echo -e "\n=========================="
+echo "📶 SAVED WIFI NETWORKS"
+echo "=========================="
+defaults read /Library/Preferences/SystemConfiguration/com.apple.airport.preferences | grep SSIDString || echo "No saved networks found or not macOS."
+
+echo -e "\n=========================="
+echo "🌍 BROWSER HISTORY (Chrome)"
+echo "=========================="
+chrome_history=~/Library/Application\ Support/Google/Chrome/Default/History
+if [ -f "$chrome_history" ]; then
+  cp "$chrome_history" /tmp/history_copy
+  echo "Last 10 Chrome URLs:"
+  sqlite3 "/tmp/history_copy" "SELECT url, title, datetime(last_visit_time/1000000-11644473600,'unixepoch') FROM urls ORDER BY last_visit_time DESC LIMIT 10;"
+  rm /tmp/history_copy
+else
+  echo "Chrome history not found."
+fi
+
+echo -e "\n=========================="
+echo "📦 INSTALLED APPLICATIONS"
+echo "=========================="
+ls /Applications | head -n 20
+echo "... (showing first 20 apps)"
+
+echo -e "\n=========================="
+echo "🔌 USB DEVICES"
+echo "=========================="
+system_profiler SPUSBDataType | grep -E 'Product ID|Vendor ID|Manufacturer|Serial Number'
+
+echo -e "\n=========================="
+echo "⚙️ RUNNING SERVICES"
+echo "=========================="
+launchctl list | head -n 20
+echo "... (showing first 20 services)"
+
+echo -e "\n✅ Audit complete."
